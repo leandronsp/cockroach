@@ -190,7 +190,7 @@ class ItemsAPI {
   final Function(List<String>) onItemsFetched;
 
   Future<void> downloadData() async {
-    var response = await http.get(Uri.parse('http://localhost:8088/myfuckingitems'));
+    var response = await http.get(Uri.parse('http://localhost:8088/items'));
     print("Response: ${response.body}");
 
     var data = jsonDecode(response.body) as Map<String, dynamic>;
