@@ -183,6 +183,24 @@ class ItemsDatabase {
 
     onItemsFetched(items);
   }
+
+  Future<void> cleanupItems() async {
+    final db = await openDatabase(
+      join(await getDatabasesPath(), 'items_database.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE items(name TEXT)',
+        );
+      },
+      version: 1,
+    );
+
+    await db.delete('items');
+
+    await db.close();
+
+    onItemsFetched([]);
+  }
 }
 
 class ItemsAPI {
@@ -225,6 +243,24 @@ class MyDownload extends StatelessWidget {
   }
 }
 
+class MyCleanup extends StatelessWidget {
+  const MyCleanup({required this.onItemsFecthed, super.key});
+  final Function(List<String>) onItemsFecthed;
+
+  Future<void> _cleanupData() async {
+    var itemsDatabase = ItemsDatabase(onItemsFetched: onItemsFecthed);
+    itemsDatabase.cleanupItems();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: _cleanupData,
+      child: const Icon(Icons.remove),
+    );
+  }
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({ super.key });
 
@@ -246,6 +282,12 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleItemsFetched(List<String> items) {
+    setState(() {
+      _items = items;
+    });
+  }
+
+  void _handleCleanup(List<String> items) {
     setState(() {
       _items = items;
     });
@@ -295,8 +337,19 @@ class _MyAppState extends State<MyApp> {
         bottomNavigationBar: BottomAppBar(
           child: MySwitch(isDarkMode: _isDarkMode, onSwitch: _handleOnSwitch),
         ),
-        floatingActionButton: MyDownload(
-          onItemsFetched: _handleItemsFetched
+        floatingActionButton: Stack(
+          children: [
+            Positioned(
+              bottom: 80,
+              right: 10,
+              child: MyDownload(onItemsFetched: _handleItemsFetched),
+            ),
+            Positioned(
+              bottom: 10,
+              right: 10,
+              child: MyCleanup(onItemsFecthed: _handleCleanup),
+            ),
+          ],
         ),
       ),
     );
